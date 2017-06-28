@@ -5,7 +5,7 @@ object RedditDemo {
   def main(args: Array[String]) {
     val mode = args.headOption.getOrElse("")
 
-    // configure interaction with facebook api
+    // configure interaction with reddit api
     val auth = RedditAuth(
       applicationId = System.getenv("REDDIT_APPLICATION_ID"),
       secret = System.getenv("REDDIT_APPLICATION_SECRET")

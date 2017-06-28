@@ -10,8 +10,7 @@ import org.apache.spark.streaming.dstream.ReceiverInputDStream
 import org.apache.spark.streaming.receiver.Receiver
 
 /**
-  * A RedditInputDStream is a concrete implementation of a {@link ReceiverInputDStream} that provides a {@link Receiver}
-  * instance that is compliant to the Reddit API usage guidelines.
+  * The RedditInputDStream provides a Reciever that is compliant to the Reddit API usage guidelines.
   *
   * @see http://github.com/reddit/reddit/wiki/API
   */
@@ -19,25 +18,30 @@ class RedditInputDStream(val client: RedditClient,
                          val keywords: Seq[String],
                          ssc: StreamingContext,
                          storageLevel: StorageLevel,
-                         val pollingPeriodInSeconds: Int = 2,
-                         val tokenRefreshPeriodInSeconds: Int = (3600/2))
+                         val subredit: Option[String] = None,
+                         val searchLimit: Int = 25,
+                         val searchResultType: Option[String] = Option("link"),
+                         val pollingPeriodInSeconds: Int = 2)
   extends ReceiverInputDStream[RedditObject](ssc) {
 
   override def getReceiver(): Receiver[RedditObject] = {
     logDebug("Creating Reddit receiver")
-    new RedditReceiver(client, keywords, storageLevel, pollingPeriodInSeconds)
+    new RedditReceiver(client, keywords, storageLevel, subredit, searchLimit, searchResultType, pollingPeriodInSeconds)
   }
 }
 
 /**
-  * The RedditReceiver is a concrete implementation of a {@link Receiver} that polls the Reddit API according to
-  * Reddit's guidelines, which includes a rate limit of 1 request per 2 seconds.
+  * The RedditReceiver polls the Reddit API according to Reddit's guidelines, which includes a rate limit of 1 request
+  * per second.
   *
   * @see http://github.com/reddit/reddit/wiki/API
   */
 private class RedditReceiver(val client: RedditClient,
                              val keywords: Seq[String],
                              storageLevel: StorageLevel,
+                             val subredit: Option[String] = None,
+                             val searchLimit: Int = 25,
+                             val searchResultType: Option[String] = Option("link"),
                              val pollingPeriodInSeconds: Int = 3)
   extends Receiver[RedditObject](storageLevel) with Logger {
 
@@ -49,16 +53,21 @@ private class RedditReceiver(val client: RedditClient,
     // TODO: Consider implementing using live threads in order to eliminate the need for polling via search.
     //       https://www.reddit.com/dev/api#GET_live_{thread}
 
-    executor = new ScheduledThreadPoolExecutor(2)
+    // Please note that in order to prevent a request rate that exceeds Reddit's guidelines, the number of threads
+    // is fixed to two. One of these will be dedicated to keeping the access token fresh and the other to perform the
+    // actual polling.
+    val threadCount = 2
+    executor = new ScheduledThreadPoolExecutor(threadCount)
 
     client.ensureFreshToken()
     var tokenRefreshPeriodInSeconds = client.tokenExpirationInSeconds()
 
-    // Make sure the polling period does not exceed 1 request per every 2 seconds.
-    val normalizedPollingPeriod = Math.max(2, tokenRefreshPeriodInSeconds.get)
+    // Make sure the polling period does not exceed 1 request per second.
+    val normalizedPollingPeriod = Math.max(1, pollingPeriodInSeconds)
 
     // Make sure the refresh period isn't shorter than the polling period.
-    val normalizedRefreshPeriod = Math.max(normalizedPollingPeriod, tokenRefreshPeriodInSeconds.get)
+    val defaultTokenRefreshPeriod = 3600
+    val normalizedRefreshPeriod = Math.max(normalizedPollingPeriod, tokenRefreshPeriodInSeconds.getOrElse(defaultTokenRefreshPeriod))
 
     executor.scheduleAtFixedRate(new Thread("Token refresh thread") {
       override def run(): Unit = {
@@ -77,20 +86,23 @@ private class RedditReceiver(val client: RedditClient,
   def onStop(): Unit = {
     if (executor != null) {
       executor.shutdown()
-
-      client.revokeToken()
     }
+    client.revokeToken()
   }
 
   protected def poll(): Unit = {
     client
-      .search(keywords = keywords)
+      .search(keywords = keywords,
+        subredit = subredit,
+        limit = searchLimit,
+        resultType = searchResultType
+      )
       .filter(x => {
-        logDebug(s"Received Reddit result ${x.data.public_description} from time ${x.data.created_utc}")
+        logDebug(s"Received Reddit result ${x.data.id} from time ${x.data.created_utc}")
         isNew(x)
       })
       .foreach(x => {
-        logInfo(s"Storing Reddit result ${x.data.url}")
+        logInfo(s"Storing Reddit result ${x.data.id} from time ${x.data.created_utc}")
         store(x)
         markStored(x)
       })

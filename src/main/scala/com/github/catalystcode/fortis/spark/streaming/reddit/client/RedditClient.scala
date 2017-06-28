@@ -51,7 +51,7 @@ class RedditClient(val applicationId: String,
   }
 
   def tokenExpirationInSeconds(): Option[Int] = {
-    if (clientCredentials.isDefined) Option(clientCredentials.get.expires_in) else None
+    clientCredentials.map(c=>c.expires_in)
   }
 
   private def fetchAccessToken(): Unit = {
