@@ -25,7 +25,7 @@ class RedditInputDStream(val client: RedditClient,
 
   override def getReceiver(): Receiver[RedditObject] = {
     logDebug("Creating Reddit receiver")
-    new RedditReceiver(client, keywords, storageLevel, pollingPeriodInSeconds, tokenRefreshPeriodInSeconds)
+    new RedditReceiver(client, keywords, storageLevel, pollingPeriodInSeconds)
   }
 }
 
@@ -38,8 +38,7 @@ class RedditInputDStream(val client: RedditClient,
 private class RedditReceiver(val client: RedditClient,
                              val keywords: Seq[String],
                              storageLevel: StorageLevel,
-                             val pollingPeriodInSeconds: Int = 3,
-                             val tokenRefreshPeriodInSeconds: Int = (3600/2))
+                             val pollingPeriodInSeconds: Int = 3)
   extends Receiver[RedditObject](storageLevel) with Logger {
 
   @volatile private var lastIngestedDate = Long.MinValue
@@ -50,15 +49,18 @@ private class RedditReceiver(val client: RedditClient,
     // TODO: Consider implementing using live threads in order to eliminate the need for polling via search.
     //       https://www.reddit.com/dev/api#GET_live_{thread}
 
+    client.ensureFreshToken()
+    var tokenRefreshPeriodInSeconds = client.tokenExpirationInSeconds()
+
     // Make sure the polling period does not exceed 1 request per every 2 seconds.
-    val normalizedPollingPeriod = Math.max(2, tokenRefreshPeriodInSeconds)
+    val normalizedPollingPeriod = Math.max(2, tokenRefreshPeriodInSeconds.get)
 
     // Make sure the refresh period isn't shorter than the polling period.
-    val normalizedRefreshPeriod = Math.max(normalizedPollingPeriod, tokenRefreshPeriodInSeconds)
+    val normalizedRefreshPeriod = Math.max(normalizedPollingPeriod, tokenRefreshPeriodInSeconds.get)
 
     executor.scheduleAtFixedRate(new Thread("Token refresh thread") {
       override def run(): Unit = {
-        ensureFreshToken()
+        client.ensureFreshToken()
       }
     }, 0, normalizedRefreshPeriod, TimeUnit.SECONDS)
 
@@ -74,16 +76,8 @@ private class RedditReceiver(val client: RedditClient,
     if (executor != null) {
       executor.shutdown()
 
-      releaseToken()
+      client.revokeToken()
     }
-  }
-
-  private def ensureFreshToken(): Unit = {
-    client.ensureFreshToken()
-  }
-
-  private def releaseToken(): Unit = {
-    client.revokeToken()
   }
 
   protected def poll(): Unit = {

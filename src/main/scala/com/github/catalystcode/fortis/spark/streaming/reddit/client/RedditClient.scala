@@ -50,6 +50,10 @@ class RedditClient(val applicationId: String,
     }
   }
 
+  def tokenExpirationInSeconds(): Option[Int] = {
+    if (clientCredentials.isDefined) Option(clientCredentials.get.expires_in) else None
+  }
+
   private def fetchAccessToken(): Unit = {
     val request = Http("https://www.reddit.com/api/v1/access_token")
       .method("POST")
@@ -60,9 +64,6 @@ class RedditClient(val applicationId: String,
 
     implicit val formats = json.DefaultFormats
     this.clientCredentials = Option(json.parse(stringResponse).extract[ClientCredentials])
-    if (this.clientCredentials.isEmpty) {
-      logError(s"Unable to create access token. Got response: ${stringResponse}")
-    }
   }
 
   private def refreshToken(): Unit = {
@@ -76,10 +77,8 @@ class RedditClient(val applicationId: String,
       .header("User-Agent", userAgent)
       .postForm(Seq("grant_type"->"refresh_token", "refresh_token"->this.clientCredentials.get.access_token))
 
-    val response = json.parseOpt(fetcher.fetchStringResponse(request))
-    if (response.isEmpty) {
-      logError(s"Unable to refresh access token ${this.clientCredentials}")
-    }
+    implicit val formats = json.DefaultFormats
+    json.parse(fetcher.fetchStringResponse(request)).extract[ClientCredentials]
   }
 
   /**
@@ -194,4 +193,4 @@ class DefaultResponseFetcher extends ResponseFetcher with Logger {
   }
 }
 
-case class ClientCredentials(val access_token: String, val token_type: String)
+case class ClientCredentials(val access_token: String, val token_type: String, val expires_in: Int)
