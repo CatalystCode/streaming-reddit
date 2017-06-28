@@ -17,10 +17,10 @@ export REDDIT_APPLICATION_TOKEN="..."
 sbt assembly
 
 # run locally
-java -cp target/scala-2.11/streaming-reddit-assembly-0.0.7.jar RedditDemo standalone
+java -cp target/scala-2.11/streaming-reddit-assembly-0.0.1.jar RedditDemo standalone
 
 # run on spark
-spark-submit --class RedditDemo --master local[2] target/scala-2.11/streaming-reddit-assembly-0.0.7.jar spark
+spark-submit --class RedditDemo --master local[2] target/scala-2.11/streaming-reddit-assembly-0.0.1.jar spark
 ```
 
 ## How does it work? ##
