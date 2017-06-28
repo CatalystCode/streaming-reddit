@@ -1,7 +1,8 @@
+[![Travis CI status](https://api.travis-ci.org/CatalystCode/streaming-reddit.svg?branch=master)](https://travis-ci.org/CatalystCode/streaming-reddit)
+
 # streaming-reddit
 
 A library for reading public search results from [Reddit](https://reddit.com/dev/api) using Spark Streaming.
-[![Travis CI status](https://api.travis-ci.org/CatalystCode/streaming-reddit.svg?branch=master)](https://travis-ci.org/CatalystCode/streaming-reddit)
 
 ## Usage example ##
 
