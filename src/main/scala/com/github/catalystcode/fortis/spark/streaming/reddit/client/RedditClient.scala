@@ -182,10 +182,11 @@ class RedditClient(val applicationId: String,
 
 }
 
-trait ResponseFetcher {
+trait ResponseFetcher extends Serializable {
   def fetchStringResponse(request: HttpRequest): String
 }
 
+@SerialVersionUID(100L)
 class DefaultResponseFetcher extends ResponseFetcher with Logger {
   override def fetchStringResponse(request: HttpRequest): String = {
     logInfo(s"Performing ${request.method} request from ${request.url}")

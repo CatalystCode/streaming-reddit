@@ -43,11 +43,13 @@ private class RedditReceiver(val client: RedditClient,
 
   @volatile private var lastIngestedDate = Long.MinValue
 
-  private final val executor: ScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(2)
+  private var executor: ScheduledThreadPoolExecutor = _
 
   def onStart(): Unit = {
     // TODO: Consider implementing using live threads in order to eliminate the need for polling via search.
     //       https://www.reddit.com/dev/api#GET_live_{thread}
+
+    executor = new ScheduledThreadPoolExecutor(2)
 
     client.ensureFreshToken()
     var tokenRefreshPeriodInSeconds = client.tokenExpirationInSeconds()
@@ -62,7 +64,7 @@ private class RedditReceiver(val client: RedditClient,
       override def run(): Unit = {
         client.ensureFreshToken()
       }
-    }, 0, normalizedRefreshPeriod, TimeUnit.SECONDS)
+    }, (normalizedRefreshPeriod-1), normalizedRefreshPeriod, TimeUnit.SECONDS)
 
     executor.scheduleAtFixedRate(new Thread("Polling thread") {
       override def run(): Unit = {
