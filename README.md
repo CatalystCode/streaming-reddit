@@ -10,9 +10,16 @@ Before you start using the Reddit stream for Spark, you will need to make sure y
 
 1. Log in and click on the `preferences` link on the top right.
 
+<img width="1026" alt="reddit_login_welcome" src="https://user-images.githubusercontent.com/1117904/27742298-c0cc0d10-5d7d-11e7-9856-fc1a21a3695b.png">
+
 2. Click the `apps` tab.
 
+<img width="1026" alt="reddit_preferences" src="https://user-images.githubusercontent.com/1117904/27742319-d1f9f3ea-5d7d-11e7-9714-c0c3eb9c34bc.png">
+
 3. Click the `Create an app` button and fill in the form.
+
+<img width="968" alt="reddit_create_an_app" src="https://user-images.githubusercontent.com/1117904/27742327-dc993f2c-5d7d-11e7-9dee-37249c31ff18.png">
+
 
 ## Usage example ##
 
