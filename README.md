@@ -40,6 +40,16 @@ java -cp target/scala-2.11/streaming-reddit-assembly-0.0.1.jar RedditDemo standa
 spark-submit --class RedditDemo --master local[2] target/scala-2.11/streaming-reddit-assembly-0.0.1.jar spark
 ```
 
+Add to your own project by adding this dependency in your `build.sbt`:
+
+```
+libraryDependencies ++= Seq(
+  //...
+  "com.github.catalystcode" %% "streaming-reddit" % "0.0.1",
+  //...
+)
+```
+
 ## How does it work? ##
 
 Currently, this streaming library polls Reddit's /r/all/search.json endpoint at interval that conforms to Reddit's API guidelines (http://github.com/reddit/reddit/wiki/API). However, at some point in the near future, this will be migrated to use Reddit live using its websockets support.
