@@ -4,6 +4,16 @@
 
 A library for reading public search results from [Reddit](https://reddit.com/dev/api) using Spark Streaming.
 
+## Prerequesite
+
+Before you start using the Reddit stream for Spark, you will need to make sure you have registered a Reddit app in your account. If you have not done so, you can follow these steps:
+
+1. Log in and click on the `preferences` link on the top right.
+
+2. Click the `apps` tab.
+
+3. Click the `Create an app` button and fill in the form.
+
 ## Usage example ##
 
 Run a demo via:
