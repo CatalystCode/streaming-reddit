@@ -33,7 +33,8 @@ case class RedditObject(kind: String, data: RedditObjectData)
   * @param title
   * @param url
   */
-case class RedditObjectData(after: Option[String],
+case class RedditObjectData(author: Option[String],
+                            after: Option[String],
                             before: Option[String],
                             children: List[RedditObject],
                             created: Option[Double],
