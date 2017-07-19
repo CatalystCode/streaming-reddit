@@ -189,7 +189,7 @@ trait ResponseFetcher extends Serializable {
 @SerialVersionUID(100L)
 class DefaultResponseFetcher extends ResponseFetcher with Logger {
   override def fetchStringResponse(request: HttpRequest): String = {
-    logInfo(s"Performing ${request.method} request from ${request.url}")
+    logDebug(s"Performing ${request.method} request from ${request.url}")
     return request.asString.body
   }
 }

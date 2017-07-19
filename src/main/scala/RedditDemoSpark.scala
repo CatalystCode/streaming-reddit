@@ -10,7 +10,7 @@ class RedditDemoSpark(auth: RedditAuth) {
     val ssc = new StreamingContext(sc, Seconds(1))
     val keywordSet = List("healthcare")
 
-    RedditUtils.createPageStream(auth, keywordSet, ssc).map(x => s"Post: ${x}").print()
+    RedditUtils.createPageStream(auth, keywordSet, ssc, pollingPeriodInSeconds=10).map(x => s"Post: ${x}").print()
 
     // run forever
     ssc.start()
